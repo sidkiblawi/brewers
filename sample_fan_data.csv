@@ -1,0 +1,41 @@
+email,first_name,last_name,segment_primary,segment_score,city,state,last_game_attended,games_attended_ytd,season_ticket_holder
+danny.mueller@email.com,Danny,Mueller,die_hard,0.92,Milwaukee,WI,2025-03-28,12,no
+kevin.schmidt@email.com,Kevin,Schmidt,die_hard,0.88,Waukesha,WI,2025-03-15,8,no
+lisa.hartwig@email.com,Lisa,Hartwig,die_hard,0.85,Brookfield,WI,2025-03-22,10,no
+mike.jankowski@email.com,Mike,Jankowski,die_hard,0.81,Racine,WI,2025-02-28,6,no
+sarah.novak@email.com,Sarah,Novak,die_hard,0.79,Wauwatosa,WI,2025-03-10,7,no
+tom.weber@email.com,Tom,Weber,die_hard,0.77,Greenfield,WI,2025-03-01,5,no
+jen.kowalski@email.com,Jen,Kowalski,die_hard,0.74,West Allis,WI,2025-02-15,4,no
+brian.fitzgerald@email.com,Brian,Fitzgerald,die_hard,0.91,Milwaukee,WI,2025-03-25,11,no
+amy.chen@email.com,Amy,Chen,die_hard,0.83,Shorewood,WI,2025-03-20,9,no
+marcus.williams@email.com,Marcus,Williams,die_hard,0.76,Oak Creek,WI,2025-03-05,5,no
+frank.deluca@email.com,Frank,DeLuca,foodie,0.94,Milwaukee,WI,2025-03-18,6,no
+maria.santos@email.com,Maria,Santos,foodie,0.89,Third Ward,WI,2025-03-22,5,no
+jake.brennan@email.com,Jake,Brennan,foodie,0.86,Bay View,WI,2025-03-10,4,no
+nina.patel@email.com,Nina,Patel,foodie,0.82,East Side,WI,2025-02-28,3,no
+chris.hoffmann@email.com,Chris,Hoffmann,foodie,0.80,Shorewood,WI,2025-03-15,4,no
+ellie.nguyen@email.com,Ellie,Nguyen,foodie,0.78,Wauwatosa,WI,2025-03-01,3,no
+sam.kirchner@email.com,Sam,Kirchner,foodie,0.75,Greendale,WI,2025-02-20,2,no
+rachel.bloom@email.com,Rachel,Bloom,foodie,0.88,Milwaukee,WI,2025-03-20,5,no
+derek.larson@email.com,Derek,Larson,foodie,0.73,Cudahy,WI,2025-02-15,2,no
+tina.garcia@email.com,Tina,Garcia,foodie,0.71,West Milwaukee,WI,2025-03-08,3,no
+patty.morrison@email.com,Patty,Morrison,family,0.91,Elm Grove,WI,2025-03-16,4,no
+dave.kowalczyk@email.com,Dave,Kowalczyk,family,0.87,New Berlin,WI,2025-03-09,3,no
+jessica.lang@email.com,Jessica,Lang,family,0.84,Menomonee Falls,WI,2025-02-23,2,no
+matt.henderson@email.com,Matt,Henderson,family,0.82,Germantown,WI,2025-03-02,3,no
+laura.schmidt@email.com,Laura,Schmidt,family,0.80,Grafton,WI,2025-03-16,4,no
+ben.armstrong@email.com,Ben,Armstrong,family,0.77,Pewaukee,WI,2025-02-16,2,no
+kelly.zhang@email.com,Kelly,Zhang,family,0.75,Cedarburg,WI,2025-03-09,3,no
+adam.burke@email.com,Adam,Burke,family,0.89,Mequon,WI,2025-03-22,5,no
+michelle.rivera@email.com,Michelle,Rivera,family,0.73,Franklin,WI,2025-02-02,1,no
+steve.olson@email.com,Steve,Olson,family,0.70,Sussex,WI,2025-03-01,2,no
+tammy.jackson@email.com,Tammy,Jackson,social,0.93,Milwaukee,WI,2025-03-21,7,no
+ryan.brooks@email.com,Ryan,Brooks,social,0.88,Third Ward,WI,2025-03-14,5,no
+ashley.martin@email.com,Ashley,Martin,social,0.85,East Side,WI,2025-03-21,6,no
+tyler.reed@email.com,Tyler,Reed,social,0.83,Bay View,WI,2025-03-07,4,no
+megan.clark@email.com,Megan,Clark,social,0.81,Walker's Point,WI,2025-03-14,5,no
+josh.peterson@email.com,Josh,Peterson,social,0.79,Riverwest,WI,2025-02-28,3,no
+nicole.foster@email.com,Nicole,Foster,social,0.76,Tosa Village,WI,2025-03-07,4,no
+alex.moreno@email.com,Alex,Moreno,social,0.90,Milwaukee,WI,2025-03-25,8,no
+brittany.hall@email.com,Brittany,Hall,social,0.74,Greenfield,WI,2025-02-21,3,no
+connor.murphy@email.com,Connor,Murphy,social,0.72,South Milwaukee,WI,2025-03-01,2,no

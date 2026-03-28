@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject_line }}</title>
+  <style>
+    /* Reset */
+    body, table, td, p, a { margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; background: #f4f4f4; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; }
+    .header { background: {{ color_accent }}; padding: 20px 30px; text-align: center; }
+    .header img { max-height: 50px; }
+    .header h3 { color: #ffffff; font-size: 14px; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .hero { background: {{ color_accent }}; text-align: center; padding: 0 30px 30px; }
+    .hero h1 { color: #FFC72C; font-size: 28px; line-height: 1.2; margin-bottom: 10px; }
+    .hero .subtext { color: #cccccc; font-size: 14px; }
+    .image-concept {
+      background: #1a1a2e;
+      color: #aaaaaa;
+      font-size: 12px;
+      font-style: italic;
+      padding: 0;
+      text-align: center;
+      border-bottom: 3px solid {{ color_accent }};
+      overflow: hidden;
+    }
+    .image-concept img {
+      width: 100%;
+      display: block;
+    }
+    .image-concept .label { color: #FFC72C; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .image-concept .fallback {
+      padding: 40px 30px;
+    }
+    .body-content { padding: 30px; }
+    .body-content p { color: #333333; font-size: 15px; line-height: 1.6; margin-bottom: 15px; }
+    .cta-wrapper { text-align: center; padding: 10px 30px 30px; }
+    .cta-button {
+      display: inline-block;
+      background: {{ color_accent }};
+      color: #ffffff !important;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 14px 36px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .game-info {
+      background: #f9f9f9;
+      padding: 20px 30px;
+      border-top: 1px solid #eeeeee;
+      text-align: center;
+    }
+    .game-info .matchup { font-size: 18px; font-weight: bold; color: {{ color_accent }}; }
+    .game-info .details { font-size: 14px; color: #666666; margin-top: 5px; }
+    .footer {
+      background: #1a1a2e;
+      padding: 20px 30px;
+      text-align: center;
+      color: #888888;
+      font-size: 11px;
+    }
+    .footer a { color: #FFC72C; text-decoration: none; }
+    .segment-badge {
+      display: inline-block;
+      background: rgba(255, 199, 44, 0.15);
+      color: #FFC72C;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- Header -->
+    <div class="header">
+      <div style="font-size: 24px; font-weight: bold; color: #FFC72C;">⚾ MILWAUKEE BREWERS</div>
+      <h3>{{ segment_emoji }} {{ segment_tagline }}</h3>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>{{ headline }}</h1>
+      <div class="subtext">{{ preview_text }}</div>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="image-concept">
+      {% if hero_image_data %}
+      <img src="data:image/jpeg;base64,{{ hero_image_data }}" alt="{{ image_concept }}" />
+      {% else %}
+      <div class="fallback">
+        <div class="label">📷 Hero Image</div>
+        {{ image_concept }}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Game Info Bar -->
+    <div class="game-info">
+      <div class="matchup">Brewers vs. {{ opponent }}</div>
+      <div class="details">{{ day_of_week }}, {{ game_date }} · {{ game_time }} · American Family Field</div>
+    </div>
+
+    <!-- Body Copy -->
+    <div class="body-content">
+      {% for paragraph in body_paragraphs %}
+      <p>{{ paragraph }}</p>
+      {% endfor %}
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-wrapper">
+      <a href="#" class="cta-button">{{ cta_text }}</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Milwaukee Brewers · American Family Field · One Brewers Way, Milwaukee, WI 53214</p>
+      <p style="margin-top: 8px;">
+        <a href="#">Manage Preferences</a> · <a href="#">Unsubscribe</a> · <a href="#">Privacy Policy</a>
+      </p>
+      <div class="segment-badge">Segment: {{ segment_name }} · Version: v_{{ segment_key }}_{{ game_date }}</div>
+    </div>
+
+  </div>
+</body>
+</html>
