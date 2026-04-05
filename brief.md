@@ -1,4 +1,4 @@
-# Tailored Marketing Engine — Technical Brief
+# Tailored Marketing Engine: Technical Brief
 
 **Prepared for:** Milwaukee Brewers, Marketing & Analytics  
 **Author:** Sid Kiblawi  
@@ -6,119 +6,115 @@
 
 ---
 
-## 1. What This Prototype Demonstrates
+## 1. What This Prototype Does
 
-This prototype shows an end-to-end workflow: a marketer selects an upcoming home game and a fan segment, the system generates differentiated email creative (subject line, body copy, CTA, and image direction), previews it in a realistic email template, and exports a CRM-ready CSV that maps the right fans to the right creative version.
+The prototype is a Streamlit app where a marketer picks an upcoming home game and a fan segment, hits generate, and gets a fully rendered email preview with differentiated copy, a hero image, and a CRM-ready CSV they can upload to Salesforce. It works out of the box with no API key (templated copy), and optionally connects to OpenAI for dynamic generation.
 
-It works today with zero API keys (templated mode) and can optionally call OpenAI for dynamic copy generation. The four segments — Die-Hard Danny, Foodie Frank, Parent Patty, and Tailgate Tammy — each receive meaningfully different messaging for the same game, all focused on Individual ticket sales.
-
-The rest of this brief outlines how I'd build the production version.
+The four segments (Die-Hard Danny, Foodie Frank, Parent Patty, Tailgate Tammy) each get meaningfully different emails for the same game, all targeting Individual ticket sales. The rest of this brief is about how I'd take it from prototype to production.
 
 ---
 
-## 2. AI-Driven vs. Rule-Based — Where Each Belongs
+## 2. Where AI Belongs (and Where It Doesn't)
 
-The most important architectural decision is knowing where AI adds value and where deterministic rules are safer.
+I think the most important thing to get right is the boundary between what the AI touches and what stays deterministic.
 
-**Rule-based (deterministic):**
+**Keep rules-based:**
 
-- **Segment assignment.** Fan segmentation should be driven by a scoring model based on behavioral data (ticket purchase history, concession spend, app usage, family pack purchases, social media engagement). These scores update nightly via a batch job. The rules for "who is a Die-Hard Danny" should be transparent, auditable, and tunable by the analytics team — not a black box.
-- **Template structure.** The email layout (header, hero image area, body, CTA button, footer with legal/unsubscribe) is fixed. Brand guidelines, logo placement, and compliance elements don't change per segment.
-- **Game context injection.** Opponent name, date, time, venue, and promo-night details come from the schedule API and are injected deterministically. AI should never hallucinate a game time.
-- **Send timing and frequency caps.** Business rules determine when emails send (e.g., 3 days before game day, no more than 2 emails per fan per week). These belong in Salesforce Journey Builder, not in an AI model.
-- **CRM field mapping.** The export schema (which columns, which Data Extension) is fixed infrastructure.
+- **Segmentation.** Fan segments should come from a scoring model built on behavioral data (ticket history, concession spend, app usage, family pack purchases). The rules for who qualifies as a "Die-Hard Danny" need to be transparent and tunable by the analytics team, not buried inside a model.
+- **Template structure.** The email skeleton (header, hero, body, CTA, footer with legal) is fixed. Brand guidelines don't change per segment.
+- **Game data.** Opponent, date, time, venue, promos. These come straight from the schedule API. AI should never be inventing a game time.
+- **Send timing and frequency caps.** When emails go out, how often a fan can be contacted. This is Journey Builder territory.
 
-**AI-driven (generative):**
+**Let AI handle:**
 
-- **Email copy.** Subject lines, headlines, and body copy are the highest-value AI application. An LLM can adapt tone (stats-heavy for Danny, sensory for Frank, warm for Patty, FOMO for Tammy) in ways that would take a human copywriter hours to do across four segments for 81 home games.
-- **Image concept direction.** AI generates a one-sentence creative brief for the hero image (e.g., "dramatic low-angle pitching shot under lights"). In production, this feeds into an asset-selection system that matches against an approved image library — or, longer-term, into Adobe Firefly for generative image creation within brand guidelines.
-- **CTA language.** Small variations in button text ("Get Your Tickets" vs. "Rally Your Crew") can be AI-generated and A/B tested automatically.
-- **Personalization at the individual level.** This is the biggest unlock with more data. Beyond segment-level copy, the same LLM pipeline can accept a fan's actual CRM profile — purchase history, last game attended, favorite player, concession spend patterns, family pack buyer vs. solo attendee — and generate a truly 1:1 email. Instead of "Die-Hard Danny gets version A," it becomes "Danny Mueller, who last came to the June 14 Cubs game and always buys terrace seats, gets a subject line referencing Burnes vs. the Cubs from the terrace level." The architecture is already built for this: the prompt templates accept structured context, and the CRM export maps each fan to their creative version. With richer customer data piped into the prompt, the same system scales from 4 segment versions to thousands of individual versions — without changing the email template, approval workflow, or SFMC integration.
+- **Copy.** This is where the leverage is. Writing four tonally different emails for 81 home games is hundreds of creative variations. An LLM can shift from stats-heavy (Danny) to sensory/foodie (Frank) to warm/family (Patty) to FOMO/social (Tammy) in seconds. A copywriter doing that manually would burn out by May.
+- **CTA language.** "Get Your Tickets" vs. "Rally Your Crew" vs. "Plan Your Family Day." Small differences that matter for conversion, easy for AI to vary, easy to A/B test.
+- **Individual-level personalization.** This is where it gets interesting with more data. Right now the system generates 4 versions (one per segment). But the architecture already accepts structured context in the prompt. If we had richer CRM data (purchase history, favorite player, seat preferences, concession patterns), we could feed that per-fan into the same pipeline and generate truly individualized emails. Danny Mueller, who last came to the June Cubs game and always buys terrace seats, gets a different subject line than Danny who came once for a bobblehead. The jump from 4 versions to thousands is an input change, not an architecture change.
 
-The principle: **structure is rules, content is AI.** A marketer should never wonder *whether* the email will have a CTA button. But *what* the CTA says is where AI earns its keep.
+My rule of thumb: structure is deterministic, content is AI. A marketer should never wonder if the email will have a CTA button. But what the button says is where AI pulls its weight.
 
 ---
 
-## 3. Handling Imperfect or Limited Fan Data
+## 3. Dealing with Messy Fan Data
 
-Real fan data will be messy. Many fans won't have clear behavioral signals. Here's how I'd handle it:
+Real fan data is going to have gaps. Lots of fans won't have clean behavioral signals. A few things I'd do:
 
-**Score, don't classify.** Every fan gets a probability score across all four segments, not a hard label. A fan might be 60% Die-Hard, 25% Social, 15% Foodie. The CRM export uses the top segment, but the score is visible — and low-confidence fans (no segment above 50%) get a "general" creative version that's a safe, broad appeal.
+**Score, don't label.** Every fan gets a probability across all four segments, not a hard assignment. Someone might be 60% Die-Hard, 25% Social, 15% Foodie. The CRM uses the top score, but when no segment clears 50%, they get a general-audience version. That's not a failure, it's the baseline.
 
-**Cold-start fans (new email subscribers, no purchase history):** Default to a general creative version. After their first game, even minimal data (which game they bought, day of week, whether they bought a family pack) starts building a signal. The system should be designed to degrade gracefully — general creative is not a failure, it's the baseline.
+**Cold-start fans** (new subscribers, no purchase history) default to the general version. After one game, even basic signals (day of week, family pack purchase, which section they sat in) start feeding the model. The system needs to degrade gracefully.
 
-**Progressively enrich.** Each email send generates engagement data (opens, clicks, conversions). A fan who consistently opens Foodie Frank emails but ignores Die-Hard Danny emails is providing implicit segment signal, even if their purchase data is sparse. This feedback loop should update segment scores weekly.
+**Use engagement as signal.** Every email we send generates data. A fan who consistently opens Foodie emails but ignores Die-Hard ones is telling us something, even if their purchase data is thin. Feed open/click data back into segment scores on a weekly cycle.
 
-**Explicit preference capture.** The Brewers app or a preference center can ask fans directly: "What matters most to you at the ballpark?" This is cheap, high-signal data that supplements behavioral modeling.
+**Ask directly.** A preference center or in-app question ("What do you care about most at the ballpark?") is cheap, high-signal data that supplements the behavioral model.
 
 ---
 
 ## 4. Marketer Review and Control
 
-AI-generated content in a professional sports context requires human oversight. Here's the control framework:
+AI-generated copy for a professional sports team needs human eyes on it before it goes out. Here's what I'd build:
 
-**Pre-send review.** The Streamlit interface (or its production equivalent in Salesforce Content Builder) shows the marketer a full preview of each segment's email before any send is triggered. They can edit copy inline, swap image concepts, or reject and regenerate.
+**Preview before send.** The prototype already does this. The marketer sees the full email for each segment, can read the copy, and decides whether to approve, edit inline, or regenerate. In production, this moves into Salesforce Content Builder or a similar tool.
 
-**Prompt guardrails.** Each segment's system prompt includes explicit `avoid` rules (e.g., the Family segment avoids beer-focused messaging; the Die-Hard segment avoids generic hype). These are configurable by the marketing team without touching code.
+**Guardrails in the prompts.** Each segment has explicit "avoid" rules baked into the system prompt. The Family segment won't get beer-focused messaging. The Die-Hard segment won't get generic fluff. These are editable by the marketing team without touching code.
 
-**Approval workflow.** In production, generated creative would enter a two-step approval: (1) automated checks (profanity filter, brand term validation, character limits) and (2) human approval by a marketing manager. Only approved creative flows into the send pipeline.
+**Two-step approval.** For production: (1) automated checks (profanity filter, brand term validation, character count limits), then (2) human sign-off from a marketing manager. Only approved creative enters the send pipeline.
 
-**Override and lock.** For high-stakes sends (Opening Day, playoff push, sponsor-integrated campaigns), the marketer can bypass AI entirely and manually author copy that gets slotted into the same template/export pipeline. The system should make AI the default, not the only option.
+**Manual override.** For high-stakes moments (Opening Day, playoff push, sponsor-integrated campaigns), the marketer can write copy themselves and slot it into the same template and export pipeline. AI should be the default, not the only option.
 
-**Performance dashboard.** Post-send, the system surfaces per-segment metrics (open rate, CTR, ticket conversion) so the marketer can see which AI-generated angles are working and adjust segment definitions or prompt templates accordingly.
+**Post-send metrics.** Surface per-segment open rate, CTR, and ticket conversion so the team can see what's working and tweak the prompt templates or segment definitions based on actual performance.
 
 ---
 
-## 5. Integration into Adobe and Salesforce
+## 5. Fitting into Adobe and Salesforce
 
-The Brewers' existing stack likely includes Salesforce Marketing Cloud (SFMC) for email orchestration and Adobe tools for creative production. Here's how this system fits:
+The Brewers likely run Salesforce Marketing Cloud for email and Adobe tools for creative. Here's how this plugs in:
 
 **Salesforce Marketing Cloud:**
 
-- The CSV export from this prototype maps directly to an **SFMC Data Extension**. Each row is a fan record with their assigned segment, creative version ID, and all email content fields.
-- **Journey Builder** consumes this Data Extension to trigger sends. The journey logic is simple: fan enters → match `creative_version_id` → send the corresponding email. Frequency capping, send-time optimization, and suppression lists all live in SFMC as they do today.
-- In a production build, the CSV upload would be replaced by an **SFMC REST API integration** — the system pushes data directly into the Data Extension via API, triggered on a schedule (e.g., 3 days before each home game).
-- **AMPscript** in the SFMC email template dynamically renders the right subject line, body, and image URL per row. One email template, four (or more) content variations.
+- The CSV export maps directly to an SFMC Data Extension. Each row is one fan with their segment, creative version ID, and all the email content fields.
+- Journey Builder picks up the Data Extension, matches each fan to their creative version, and sends. Frequency capping, send-time optimization, suppression lists all stay in SFMC where they already live.
+- In production, the CSV upload becomes an SFMC REST API call. The system pushes data into the Data Extension on a schedule (3 days before each home game, for example).
+- AMPscript in the SFMC email template renders the right subject, body, and image per row. One template, four (or more) content variations.
 
-**Adobe (Creative Cloud / Experience Platform):**
+**Adobe:**
 
-- **Asset management:** The image concepts generated by AI map to an approved asset library managed in Adobe Experience Manager (AEM) or Adobe DAM. A tagging system matches concepts ("tailgate scene," "family in stands") to pre-approved photography.
-- **Adobe Firefly (longer-term):** For generative image creation within brand guidelines, Firefly's API could take the image concept string and produce a hero image that uses Brewers brand colors, fonts, and style — with human approval before use.
-- **Adobe Campaign (if used alongside SFMC):** The same Data Extension schema can feed Adobe Campaign's delivery engine if the Brewers run campaigns across both platforms.
+- Image concepts map to a tagged asset library in Adobe Experience Manager or Adobe DAM. A tagging system matches concepts ("tailgate scene," "family in stands") to approved photography.
+- Longer-term, Adobe Firefly could take the concept string and generate a hero image within Brewers brand guidelines, with human approval before use.
+- If the Brewers run Adobe Campaign alongside SFMC, the same data schema works for both.
 
-The key insight: **this system doesn't replace the existing stack — it feeds it.** The AI layer generates content; the existing tools handle delivery, compliance, and measurement.
+The point is that this system doesn't replace what's already there. It feeds the existing stack with better content, faster.
 
 ---
 
-## 6. Failure Case: Tone-Deaf Game Context
+## 6. A Failure Case (and How to Fix It)
 
-**The failure:** AI generates a chipper "Bring the family for a sunny Sunday funday!" email for a Parent Patty segment — but the game is actually a 7:10 PM Tuesday night game in September with playoff implications. The tone is wrong for the context.
+Here's one that would definitely happen: the AI generates a "Bring the family for a sunny Sunday funday!" email for the Parent Patty segment, but the game is actually a 7:10 PM Tuesday night game in September with playoff implications. The tone completely misreads the context.
 
-**Why it happens:** The LLM has access to the game date and time, but it doesn't inherently understand that a Tuesday night game isn't a family-friendly outing, or that September games carry different weight than April games.
+Why? The LLM knows the date and time, but it doesn't inherently know that a Tuesday night in September isn't a family outing, or that late-season games carry different weight.
 
-**How I'd fix it:**
+How I'd fix it:
 
-1. **Structured context injection.** Before the LLM prompt, a rule-based layer annotates the game with derived context flags: `is_weekend: false`, `is_day_game: false`, `is_family_friendly: low`, `season_phase: stretch_run`, `series_significance: high`. These flags are computed deterministically from the schedule data and standings API.
+1. **Add derived context flags.** Before the prompt, a rules layer tags the game: `is_weekend: false`, `is_day_game: false`, `is_family_friendly: low`, `season_phase: stretch_run`. Computed from schedule data and standings.
 
-2. **Prompt conditioning.** The system prompt includes these flags explicitly: "This is a weeknight evening game during the playoff stretch. Adjust tone accordingly — this is not a casual outing." The LLM adapts its output based on structured signals, not vibes.
+2. **Inject them into the prompt.** "This is a weeknight evening game during the playoff stretch. Adjust accordingly." The LLM adapts based on structured signals instead of guessing.
 
-3. **Segment-game compatibility scoring.** Some segment × game combinations are weak fits. A Tuesday 7:10 PM game is a great fit for Die-Hard Danny (meaningful game) but a poor fit for Parent Patty (school night). The system could flag low-compatibility pairings and suggest the marketer skip that segment for that game, or auto-select the best 2-3 segments per game instead of always running all four.
+3. **Score segment-game compatibility.** Some segment/game combos are just bad fits. A Tuesday 7:10 PM game is great for Die-Hard Danny but rough for Parent Patty (school night). Flag low-compatibility pairings and let the marketer skip that segment for that game.
 
-4. **Post-generation validation.** A lightweight rules check scans the generated copy for mismatches: if `is_day_game: false` but the copy mentions "sunny" or "afternoon," flag it for review. This catches the most obvious errors without requiring a human to read every email.
+4. **Post-generation check.** A simple rules scan: if `is_day_game` is false but the copy says "sunny" or "afternoon," flag it before it goes out.
 
-This layered approach — structured context → prompt conditioning → compatibility scoring → post-generation validation — makes the system progressively more robust without over-engineering any single layer.
+Layer those together and you catch most of the obvious mistakes without requiring a human to read every single email.
 
 ---
 
 ## 7. What I'd Build Next
 
-If this moved from prototype to production, the immediate next steps would be:
+If this moved to production:
 
-1. **Connect to the Brewers' actual fan database** (anonymized CRM export) and build a real segmentation scoring model based on ticket purchase history, concession data, and app engagement.
-2. **SFMC API integration** — replace CSV download with direct Data Extension push.
-3. **A/B testing framework** — for each segment, generate 2-3 subject line variants and let SFMC's built-in A/B testing pick the winner automatically.
-4. **Feedback loop** — pipe open/click/conversion data back into the segment scoring model and the prompt templates. If Die-Hard Danny emails get higher CTR when they mention pitching matchups vs. standings, encode that learning.
-5. **Image asset matching** — the prototype already demonstrates this: real Brewers photography from Wikimedia Commons (American Family Field, Sausage Race, fireworks nights, etc.) is automatically matched to each segment and embedded as the hero image. In production, this would connect to an Adobe DAM-tagged library with thousands of approved assets.
-6. **True 1:1 personalization** — with access to richer customer data (purchase history, favorite players, concession preferences, attendance frequency), the OpenAI prompt can be enriched per-fan rather than per-segment. The system already accepts structured context in its prompts — the leap from 4 segment versions to individualized emails is an input change, not an architecture change. A fan who attended 15 games last year and always sits in the terrace level gets a fundamentally different email than a fan who came once for a bobblehead night — all generated automatically, reviewed in the same approval workflow.
+1. **Real fan data.** Connect to the actual CRM (anonymized) and build a proper segmentation model off ticket purchase history, concession data, and app engagement.
+2. **SFMC API integration.** Replace the CSV download with a direct Data Extension push.
+3. **A/B testing.** Generate 2-3 subject line variants per segment, let SFMC's built-in testing pick the winner.
+4. **Feedback loop.** Pipe open/click/conversion data back into segment scores and prompt templates. If Die-Hard emails convert better when they mention pitching matchups vs. standings, encode that.
+5. **Image asset library.** The prototype already pulls real Brewers photos from Wikimedia Commons and matches them to segments. In production, this connects to an Adobe DAM with thousands of tagged, approved assets.
+6. **1:1 personalization.** With richer customer data, the OpenAI prompt gets enriched per-fan instead of per-segment. A fan who came to 15 games last year and always sits in the terrace gets a different email than someone who came once for a bobblehead. Same pipeline, different inputs.
 
-The goal is a system where a marketer can walk in on Monday morning, review the week's upcoming home games, approve (or tweak) the AI-generated creative for each segment, and have the sends scheduled in SFMC by lunch — a workflow that currently takes a full creative cycle for each variation.
+The end state: a marketer walks in Monday morning, reviews the week's home games, approves or tweaks the AI-generated creative for each segment, and has sends scheduled in SFMC by lunch. Right now that takes a full creative cycle per variation.

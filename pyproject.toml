@@ -13,3 +13,8 @@ dependencies = [
     "requests>=2.33.0",
     "streamlit>=1.55.0",
 ]
+
+[dependency-groups]
+dev = [
+    "fpdf2>=2.8.7",
+]
